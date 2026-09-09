@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backend virtual environments & caches
+backend/venv/
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+
+# Backend secrets & env files
+backend/.env
+backend/.env.local
+backend/*.env
+
+# Backend database & temporary assets
+backend/*.db
+backend/*.sqlite3
+backend/uploads/
+backend/generated/
+backend/temp/
