@@ -1,186 +1,95 @@
-ShilpSetu (शिल्पसेतु) 🏺
+# ShilpSetu
 
-A simple way for traditional Indian artisans to turn their craft into digital product listings using AI.
+ShilpSetu (`शिल्पसेतु` - Craft Bridge) is a full-stack platform designed to empower Indian artisans by leveraging AI to bridge the gap between traditional craft and modern e-commerce. The application allows artisans to upload a photo of their craft and receive a professional, market-ready product listing, including enhanced images, multilingual descriptions, and fair-trade pricing.
 
-About the Project
+##  Key Features
 
-ShilpSetu is an AI-powered platform designed to help rural and marginalized artisans sell their products online.
+*   **AI-Powered Catalog Generation**: Uses Google's Gemini 2.5 Flash model to generate compelling, culturally-aware product titles and descriptions from a simple image and a few notes.
+*   **Multilingual Support**: Automatically translates product listings into multiple Indian languages (English, Hindi, Marathi, Bengali, Tamil) to reach a wider audience.
+*   **Fair-Trade Smart Pricing**: An AI-driven module that analyzes the product and material cost to suggest an ethical and competitive retail price, ensuring fair compensation for the artisan.
+*   **Studio Image Enhancement**: A backend service that automatically processes uploaded images to improve lighting, contrast, and framing, creating a professional "studio shot" look.
+*   **Voice-to-Text for Descriptions**: Artisans can simply speak a description of their product, which is transcribed and used as input for the AI, overcoming literacy barriers.
+*   **Full-Stack Architecture**: Built with a modern stack featuring a Next.js frontend and a Python (FastAPI) backend.
 
-The idea is simple: an artisan can upload a photo of a handmade product and provide some basic information about it. The application uses Gemini AI to analyze the product and help create a product listing with details such as the craft type, material, description, tags, and an estimated price range.
+##  Tech Stack
 
-The goal is to reduce the amount of technical work an artisan has to do before putting their products online.
+*   **Frontend**: Next.js, React, TypeScript, Tailwind CSS
+*   **Backend**: Python, FastAPI, Uvicorn
+*   **Database**: SQLite
+*   **AI**: Google Gemini 2.5 Flash API (for multimodal understanding, text generation, and speech-to-text)
+*   **Image Processing**: Pillow
 
-Features
-AI Product Cataloging
-Upload a product image and let the AI identify details such as the craft type, material, category, and visible design elements.
-Pricing Assistance
-Provides an estimated price range to help artisans understand how their product could be priced. The estimate is intended as guidance and can be reviewed by the artisan.
-Multilingual Listings
-Product descriptions can be generated in different languages, including Hindi and English.
-Voice Input
-Artisans can describe their products using their voice instead of having to type everything manually.
-Product Preview
-Automatically generated product information can be viewed as a catalog card before publishing.
-Digital Marketplace
-Products can be displayed in a marketplace where buyers can browse different crafts and products.
-AI-Assisted Market Matching
-AI can suggest potential buyer groups such as gift shops, home décor stores, eco-friendly retailers, and interior designers based on the product.
-How It Works
-Artisan
-   ↓
-Upload Product Photo
-   ↓
-AI Analysis (Gemini)
-   ↓
-Product Details Generated
-   ↓
-Artisan Reviews / Edits
-   ↓
-Product Listing
-   ↓
-Marketplace
-   ↓
-Buyer Enquiry
-Tech Stack
-Frontend
-Next.js
-React
-TypeScript
-Tailwind CSS
-Backend
-Python
-FastAPI
-Gemini API
-Database / Storage
-Supabase
-PostgreSQL
-Supabase Storage
-Project Structure
-ShilpSetu/
-│
-├── app/                    # Next.js frontend
-│   ├── services/
-│   │   └── api.ts          # Backend API communication
-│   └── page.tsx            # Main application UI
-│
-├── backend/                # FastAPI backend
-│   ├── main.py             # API and Gemini integration
-│   ├── requirements.txt    # Python dependencies
-│   └── .env.example        # Environment variable template
-│
-├── public/                 # Static assets
-│
-└── README.md
-Getting Started
-Prerequisites
+##  How It Works: The AI Pipeline
 
-Make sure you have the following installed:
+The core of ShilpSetu is an automated pipeline that transforms a raw product upload into a complete e-commerce listing.
 
-Node.js 18 or newer
-Python 3.10 or newer
-A Gemini API key
-1. Clone the repository
-git clone <repository-url>
-cd ShilpSetu
-2. Set up the backend
+1.  **Upload**: The artisan uploads a product photo and provides a basic description. They can type the description or use the microphone to record a voice note.
+2.  **Voice Transcription**: If a voice note is provided, it is sent to the backend's `/voice/transcribe` endpoint, where the Gemini API transcribes the audio to text.
+3.  **Image & Data Storage**: The original image and metadata (artisan's description, material cost, etc.) are saved, and a new product entry is created in the database.
+4.  **Image Enhancement**: The backend enhances the uploaded image by adjusting brightness and contrast and padding it onto a clean white background to create a uniform, professional look.
+5.  **Multilingual Cataloging**: The enhanced image and the artisan's description are sent to the Gemini multimodal endpoint. A specialized prompt guides the AI to generate a complete catalog with titles and descriptions in five different languages.
+6.  **Smart Pricing**: The product details and material cost are fed to another AI-powered endpoint, which calculates a fair-trade retail price, breaking it down into material cost, labor, craftsmanship value, and marketplace margin.
+7.  **Display**: The frontend receives all the generated data and displays a complete, professional product page with the enhanced image, AI-generated descriptions (with a language switcher), and the certified fair price.
 
-Go to the backend directory:
+##  Getting Started
 
-cd backend
+To run this project locally, you will need Node.js, Python, and a Google Gemini API key.
 
-Create a Python virtual environment:
+### 1. Backend Setup
 
-Windows (PowerShell):
+First, set up and run the FastAPI backend server.
 
+```bash
+# Clone the repository
+git clone https://github.com/abhayvk4-tech/ShilpSetu.git
+cd ShilpSetu/backend
+
+# Create and activate a Python virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
 
-Linux / macOS:
-
-python3 -m venv venv
-source venv/bin/activate
-
-Install the required packages:
-
+# Install the required Python packages
 pip install -r requirements.txt
 
-Create your environment file:
-
+# Create a .env file from the example
 cp .env.example .env
 
-Add your Gemini API key to .env:
+# Add your Google Gemini API key to the .env file
+# GEMINI_API_KEY=your_gemini_api_key_here
 
-GEMINI_API_KEY=your_gemini_api_key
-PORT=8000
+# The backend database 'shilpsetu.db' will be created automatically.
+# Run the backend server
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+The backend API will be available at `http://localhost:8000`.
 
-Start the backend:
+### 2. Frontend Setup
 
-python main.py
+In a new terminal, set up and run the Next.js frontend.
 
-The API should now be available at:
+```bash
+# Navigate to the root project directory
+cd .. 
 
-http://localhost:8000
-3. Set up the frontend
-
-Open another terminal and return to the project root:
-
-cd ShilpSetu
-
-Install the dependencies:
-
+# Install npm dependencies
 npm install
 
-Start the development server:
-
+# Run the frontend development server
 npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) in your browser to see the application. The frontend is configured to communicate with the backend running on port 8000.
 
-The frontend should be available at:
+## 📋 API Endpoints
 
-http://localhost:3000
-Environment & Security
+The FastAPI backend provides the following core endpoints:
 
-API keys and other sensitive configuration should not be committed to the repository.
-
-The following are kept out of Git using .gitignore:
-
-.env files
-Python virtual environments (venv/)
-Local database files
-Other local configuration files
-
-Use backend/.env.example as a template when setting up the project locally.
-
-Project Scope
-
-ShilpSetu is being developed as a hackathon project and focuses on demonstrating the core idea of AI-assisted catalog creation and market access for artisans.
-
-The current implementation focuses on the main workflow:
-
-Product → AI Analysis → Catalog → Review → Marketplace → Buyer Enquiry
-
-More advanced features such as payments, logistics, advanced recommendation systems, and large-scale marketplace infrastructure can be added in future versions.
-
-Future Improvements
-
-Some features we would like to explore in future versions include:
-
-Better recognition of regional and traditional crafts
-Support for more Indian languages
-Offline/low-connectivity support
-Improved pricing models based on local market data
-Direct buyer-artisan communication
-Integration with existing e-commerce platforms
-Analytics to help artisans understand which products perform best
-Hackathon
-
-Problem Statement: SIH26090
-
-Theme: AI-Driven Market Linkage and Smart Cataloging for Marginalized Artisans
-
-Project: ShilpSetu (शिल्पसेतु)
-
-Team
-
-Built as a Smart India Hackathon 2026 project.
-
-ShilpSetu — helping traditional craft find a place in the digital marketplace.
+| Method | Endpoint                             | Description                                                    |
+| :----- | :----------------------------------- | :------------------------------------------------------------- |
+| `POST` | `/products/upload-image`             | Upload a product image and initial metadata.                   |
+| `POST` | `/products/{id}/enhance-image`       | Trigger the AI image enhancement module.                       |
+| `POST` | `/products/{id}/generate-catalog`    | Generate multilingual titles and descriptions using Gemini.    |
+| `POST` | `/products/{id}/price`               | Calculate the fair-trade price for the product.                |
+| `GET`  | `/products`                          | Fetch all products from the database for the marketplace feed. |
+| `GET`  | `/products/{id}`                     | Get details for a single product.                              |
+| `POST` | `/voice/transcribe`                  | Transcribe an uploaded audio file to text.                     |
+| `GET`  | `/artisans`                          | List all registered artisans.                                  |
