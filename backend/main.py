@@ -41,7 +41,7 @@ def startup_db_check():
         conn = sqlite3.connect("shilpsetu.db")
         cursor = conn.cursor()
         
-        # Ensure the artisans table exists
+        # Create table if it doesn't exist
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS artisans (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,7 +51,16 @@ def startup_db_check():
             )
         """)
         
-        # Insert default artisan record if missing
+        # Add missing columns if table already existed with old schema
+        cursor.execute("PRAGMA table_info(artisans)")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if "craft" not in columns:
+            cursor.execute("ALTER TABLE artisans ADD COLUMN craft TEXT")
+        if "region" not in columns:
+            cursor.execute("ALTER TABLE artisans ADD COLUMN region TEXT")
+        
+        # Insert default artisan record
         cursor.execute("""
             INSERT OR IGNORE INTO artisans (id, name, craft, region)
             VALUES (1, 'Default Artisan', 'Pottery', 'India')
