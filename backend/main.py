@@ -35,6 +35,33 @@ app = FastAPI(
     ),
     version="1.0.0"
 )
+@app.on_event("startup")
+def startup_db_check():
+    try:
+        conn = sqlite3.connect("shilpsetu.db")
+        cursor = conn.cursor()
+        
+        # Ensure the artisans table exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS artisans (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                craft TEXT,
+                region TEXT
+            )
+        """)
+        
+        # Insert default artisan record if missing
+        cursor.execute("""
+            INSERT OR IGNORE INTO artisans (id, name, craft, region)
+            VALUES (1, 'Default Artisan', 'Pottery', 'India')
+        """)
+        
+        conn.commit()
+        conn.close()
+        print("Database checked & default artisan initialized.")
+    except Exception as e:
+        print(f"Startup DB init warning: {e}")
 
 # ============================================================
 # CORS
