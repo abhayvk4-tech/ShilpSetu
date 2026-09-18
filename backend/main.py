@@ -743,96 +743,78 @@ def search_products(q: str):
 # VOICE INPUT (GEMINI NATIVE SPEECH-TO-TEXT & TRANSLATION)
 # ============================================================
 
+
 @app.post("/voice/transcribe")
 async def transcribe_voice(audio: UploadFile = File(...)):
     try:
-        # Read uploaded audio
+        # ------------------------------------------------------------
+        # 1. Read the uploaded audio
+        # ------------------------------------------------------------
+
         audio_bytes = await audio.read()
 
         if not audio_bytes:
             raise HTTPException(
                 status_code=400,
-                detail="No audio data received"
+                detail="No audio data was received."
             )
 
-        # Get MIME type from browser/frontend
         mime_type = audio.content_type or "audio/webm"
 
-        print(f"Voice upload: {audio.filename}")
-        print(f"Voice MIME type: {mime_type}")
-        print(f"Voice size: {len(audio_bytes)} bytes")
+        print("========== VOICE REQUEST ==========")
+        print(f"Filename: {audio.filename}")
+        print(f"MIME type: {mime_type}")
+        print(f"Audio size: {len(audio_bytes)} bytes")
 
-        # Gemini supports these audio formats
-        supported_types = {
-            "audio/webm",
-            "audio/ogg",
-            "audio/opus",
-            "audio/mpeg",
-            "audio/mp3",
-            "audio/wav",
-            "audio/x-wav",
-            "audio/aac",
-            "audio/flac",
-            "audio/mp4",
-            "audio/m4a"
-        }
+        # ------------------------------------------------------------
+        # 2. Send audio to Gemini
+        # ------------------------------------------------------------
 
-        # If browser sends a slightly unusual MIME type,
-        # try to infer it from the filename.
-        if mime_type not in supported_types:
-            filename = (audio.filename or "").lower()
-
-            if filename.endswith(".webm"):
-                mime_type = "audio/webm"
-            elif filename.endswith(".ogg"):
-                mime_type = "audio/ogg"
-            elif filename.endswith(".opus"):
-                mime_type = "audio/opus"
-            elif filename.endswith(".mp3"):
-                mime_type = "audio/mp3"
-            elif filename.endswith(".wav"):
-                mime_type = "audio/wav"
-            elif filename.endswith(".m4a"):
-                mime_type = "audio/m4a"
-            elif filename.endswith(".aac"):
-                mime_type = "audio/aac"
-            elif filename.endswith(".flac"):
-                mime_type = "audio/flac"
-            else:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Unsupported audio format: {mime_type}"
-                )
-
-        # Create Gemini audio part
-        audio_part = types.Part.from_bytes(
-            data=audio_bytes,
-            mime_type=mime_type
-        )
-
-        # Use Gemini's dedicated transcription model
         response = client.models.generate_content(
-            model="gemini-3.5-transcribe",
+            model="gemini-2.5-flash",
             contents=[
-                audio_part,
+                types.Part.from_bytes(
+                    data=audio_bytes,
+                    mime_type=mime_type
+                ),
                 """
-                Transcribe the speech in this audio exactly.
+                Transcribe the speech in this audio.
 
-                Requirements:
-                - Detect the spoken language automatically.
-                - Preserve the speaker's actual meaning.
-                - If the speaker uses Hindi, Marathi, Bengali, Tamil,
-                  or another Indian language, transcribe what they actually said.
-                - Do not invent or add information.
-                - Return only the transcription text.
+                Return ONLY the exact spoken words as plain text.
+
+                Detect the spoken language automatically.
+
+                If the speaker is using Hindi, Marathi, Bengali,
+                Tamil, or another Indian language, preserve the
+                original language in the transcription.
+
+                Do not translate.
+                Do not summarize.
+                Do not explain anything.
+                Do not return JSON.
                 """
-            ]
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0
+            )
         )
+
+        # ------------------------------------------------------------
+        # 3. Extract Gemini response
+        # ------------------------------------------------------------
 
         transcription = (response.text or "").strip()
 
+        print(f"Gemini response: {repr(transcription)}")
+
         if not transcription:
-            raise Exception("Gemini returned an empty transcription")
+            raise Exception(
+                "Gemini returned an empty transcription."
+            )
+
+        # ------------------------------------------------------------
+        # 4. Return successful result
+        # ------------------------------------------------------------
 
         return {
             "success": True,
@@ -846,13 +828,16 @@ async def transcribe_voice(audio: UploadFile = File(...)):
         raise
 
     except Exception as e:
+
+        # ------------------------------------------------------------
         # IMPORTANT:
-        # Print the real error in the backend terminal.
-        print("========================================")
-        print("VOICE TRANSCRIPTION ERROR")
+        # Print the real error to Render logs
+        # ------------------------------------------------------------
+
+        print("========== VOICE TRANSCRIPTION ERROR ==========")
         print(f"Error type: {type(e).__name__}")
-        print(f"Error: {str(e)}")
-        print("========================================")
+        print(f"Error message: {str(e)}")
+        print("===============================================")
 
         return {
             "success": False,
@@ -862,6 +847,8 @@ async def transcribe_voice(audio: UploadFile = File(...)):
             "translation": "",
             "message": "Voice transcription failed"
         }
+
+
 
 # ============================================================
 # RUN SERVER
